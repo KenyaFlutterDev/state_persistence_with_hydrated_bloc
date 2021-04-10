@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:state_persistence_example/config/config.dart';
+import 'package:state_persistence_example/cubits/auth_cubit.dart';
+import 'package:state_persistence_example/cubits/login_cubit.dart';
 import 'package:state_persistence_example/views/home/home_screen.dart';
 
 class DetailsScreen extends StatelessWidget {
@@ -90,32 +93,52 @@ class DetailsScreen extends StatelessWidget {
                       FormBuilderValidators.email(context),
                     ]),
                   ),
-                  SizedBox(height: 20.0),
-                  ButtonTheme(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                    ),
-                    child: MaterialButton(
-                      onPressed: () {
-                        //  TODO: Process details
+                  SizedBox(height: 30.0),
+                  BlocConsumer<LoginCubit, LoginState>(
+                    listener: (context, state) {
+                      if (state is LoginStateSuccess) {
+                        // authenticate user
+                        context.read<AuthCubit>().authenticateUser(state.user);
+
+                        // Go to home screen
                         Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => HomeScreen()), (route) => false);
-                      },
-                      color: Theme.of(context).primaryColor,
-                      height: 60.0,
-                      elevation: 10.0,
-                      textColor: Colors.white,
-                      child: Center(
-                        child: FittedBox(
-                          child: Text(
-                            'SUBMIT',
-                            style: CustomFonts.nunito.copyWith(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.w700,
+                      }
+                    },
+                    builder: (context, state) {
+                      if (state is LoginStateProgress) {
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      } else {
+                        return ButtonTheme(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                          ),
+                          child: MaterialButton(
+                            onPressed: () {
+                              if (_detailsFormKey.currentState.saveAndValidate()) {
+                                context.read<LoginCubit>().login(_detailsFormKey.currentState.value);
+                              }
+                            },
+                            color: Theme.of(context).primaryColor,
+                            height: 60.0,
+                            elevation: 10.0,
+                            textColor: Colors.white,
+                            child: Center(
+                              child: FittedBox(
+                                child: Text(
+                                  'SUBMIT',
+                                  style: CustomFonts.nunito.copyWith(
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
+                        );
+                      }
+                    },
                   ),
                 ],
               ),
